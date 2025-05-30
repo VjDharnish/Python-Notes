@@ -1,0 +1,1315 @@
+# zohocrm
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app: weaviate-zohocrm
+  name: weaviate-zohocrm
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: weaviate-zohocrm
+  template:
+    metadata:
+      labels:
+        app: weaviate-zohocrm
+        services: zohocrm-idmpod
+    spec:  
+      containers:
+      - args:
+        - --host
+        - 0.0.0.0
+        - --port
+        - "8080"
+        - --scheme
+        - http
+        - --config-file
+        - /weaviate-config/conf.yaml
+        - --read-timeout=60s
+        - --write-timeout=60s
+        command:
+        - /bin/weaviate
+        env:
+        - name: HOST_IP
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: status.hostIP
+        - name: PRIMARY_SETUP
+          value: "true"
+        - name: BINLOG_PATH
+          value: /binlogs
+        - name: PERSISTENCE_DATA_PATH
+          value: /var/lib/weaviate
+        - name: CLUSTER_DATA_BIND_PORT
+          value: "7001"
+        - name: CLUSTER_GOSSIP_BIND_PORT
+          value: "7000"
+        - name: GOGC
+          value: "100"
+        - name: PROMETHEUS_MONITORING_ENABLED
+          value: "true"
+        - name: PROMETHEUS_MONITORING_GROUP
+          value: "false"
+        - name: QUERY_MAXIMUM_RESULTS
+          value: "1000"
+        - name: QUERY_DEFAULT_RESULTS
+          value: "100"
+        - name: REINDEX_VECTOR_DIMENSIONS_AT_STARTUP
+          value: "false"
+        - name: TRACK_VECTOR_DIMENSIONS
+          value: "false"
+        - name: AUTOSCHEMA_ENABLED
+          value: "false"
+        - name: GOMEMLIMIT
+          value: "24000MiB"
+        - name: CLUSTER_SKIP_SCHEMA_REPAIR
+          value: "false"
+        - name: CLUSTER_BASIC_AUTH_USERNAME
+          valueFrom:
+            secretKeyRef:
+              key: username
+              name: weaviate-zohocrm-basic-auth
+        - name: CLUSTER_BASIC_AUTH_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: password
+              name: weaviate-zohocrm-basic-auth
+        - name: STANDALONE_MODE
+          value: "true"
+        - name: DEFAULT_VECTORIZER_MODULE
+          value: none
+        - name: CLUSTER_JOIN
+          value: weaviate-zohocrm-headless.weaviate-default.svc.cluster.local
+        - name: AUTHENTICATION_APIKEY_ENABLED
+          value: "true"
+        - name: AUTHENTICATION_APIKEY_ALLOWED_KEYS
+          valueFrom:
+            secretKeyRef:
+              key: authentication-apikey-allowed-keys
+              name: weaviate-zohocrm-basic-auth 
+        - name: AUTHENTICATION_APIKEY_USERS
+          value: admin
+        - name: AUTHORIZATION_ADMINLIST_ENABLED
+          value: "true"
+        - name: AUTHORIZATION_ADMINLIST_USERS
+          value: admin
+        - name: LIMIT_RESOURCES
+          value: "true"
+        - name: GOMAXPROCS
+          value: "6"
+        - name: LOG_LEVEL
+          value: debug
+        image:  10.96.0.20/dev/weaviate:int-prod-2.1.4
+        imagePullPolicy: Always
+        livenessProbe:
+          failureThreshold: 30
+          httpGet:
+            path: /v1/.well-known/live
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 900
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 3
+        name: weaviate-zohocrm
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        - containerPort: 50051
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /v1/.well-known/ready
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 3
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 3
+        resources:
+          limits:
+            cpu: "5"
+            memory: 9Gi
+        securityContext:
+          privileged: false
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /weaviate-config
+          name: weaviate-config
+        - mountPath: /var/lib/weaviate
+          name: weaviate-default-data
+        - mountPath: /binlogs
+          name: weaviate-default-binlogs
+      imagePullSecrets:
+      - name: zia-regcred
+      initContainers:
+      - command:
+        - sysctl
+        - -w
+        - vm.max_map_count=524288
+        - vm.overcommit_memory=1
+        image:  10.96.0.20/dev/alpine:prod-latest
+        resources:
+          limits:
+            cpu: "1"
+            memory: 1Gi
+        imagePullPolicy: Always
+        name: configure-sysctl
+        securityContext:
+          privileged: true
+          runAsUser: 0
+      volumes:
+      - configMap:
+          name: weaviate-zohocrm-config
+        name: weaviate-config
+  volumeClaimTemplates:
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: weaviate-default-data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 32Gi
+      storageClassName: local-storage
+      volumeMode: Filesystem
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: weaviate-default-binlogs
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 32Gi
+      storageClassName: local-storage
+      volumeMode: Filesystem
+---
+apiVersion: v1
+data:
+  conf.yaml: |-
+    ---
+    authentication:
+      anonymous_access:
+        enabled: false
+      oidc:
+        enabled: false
+    authorization:
+      admin_list:
+        enabled: false
+
+    query_defaults:
+      limit: 100
+    debug: false
+kind: ConfigMap
+metadata:
+  name: weaviate-zohocrm-config
+---
+apiVersion: v1
+data:
+  password: FAKEKEYFAKEKEY
+  username: FAKEKEYFAKEKEY
+  authentication-apikey-allowed-keys: FAKEKEYFAKEKEY
+kind: Secret
+metadata:
+  name: weaviate-zohocrm-basic-auth
+type: kubernetes.io/basic-auth
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: weaviate-zohocrm
+spec:
+  ports:
+  - name: http
+    nodePort: 30022 
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  - name: grpc
+    nodePort: 30023
+    port: 50051
+    protocol: TCP
+    targetPort: 50051
+  selector:
+    app: weaviate-zohocrm
+  type: NodePort
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: weaviate-zohocrm-headless
+spec:
+  clusterIP: None
+  internalTrafficPolicy: Cluster
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: 7000
+  publishNotReadyAddresses: true
+  selector:
+    app: weaviate-zohocrm
+  type: ClusterIP
+---
+# platformai
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app: weaviate-platformai
+  name: weaviate-platformai
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: weaviate-platformai
+  template:
+    metadata:
+      labels:
+        app: weaviate-platformai
+        services: platformai
+    spec:  
+      containers:
+      - args:
+        - --host
+        - 0.0.0.0
+        - --port
+        - "8080"
+        - --scheme
+        - http
+        - --config-file
+        - /weaviate-config/conf.yaml
+        - --read-timeout=60s
+        - --write-timeout=60s
+        command:
+        - /bin/weaviate
+        env:
+        - name: HOST_IP
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: status.hostIP
+        - name: PRIMARY_SETUP
+          value: "true"
+        - name: BINLOG_PATH
+          value: /binlogs
+        - name: PERSISTENCE_DATA_PATH
+          value: /var/lib/weaviate
+        - name: CLUSTER_DATA_BIND_PORT
+          value: "7001"
+        - name: CLUSTER_GOSSIP_BIND_PORT
+          value: "7000"
+        - name: GOGC
+          value: "100"
+        - name: PROMETHEUS_MONITORING_ENABLED
+          value: "false"
+        - name: PROMETHEUS_MONITORING_GROUP
+          value: "false"
+        - name: QUERY_MAXIMUM_RESULTS
+          value: "1000"
+        - name: QUERY_DEFAULT_RESULTS
+          value: "100"
+        - name: REINDEX_VECTOR_DIMENSIONS_AT_STARTUP
+          value: "false"
+        - name: TRACK_VECTOR_DIMENSIONS
+          value: "false"
+        - name: AUTOSCHEMA_ENABLED
+          value: "false"
+        - name: GOMEMLIMIT
+          value: "24000MiB"
+        - name: CLUSTER_SKIP_SCHEMA_REPAIR
+          value: "false"
+        - name: CLUSTER_BASIC_AUTH_USERNAME
+          valueFrom:
+            secretKeyRef:
+              key: username
+              name: weaviate-platformai-basic-auth
+        - name: CLUSTER_BASIC_AUTH_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: password
+              name: weaviate-platformai-basic-auth
+        - name: STANDALONE_MODE
+          value: "true"
+        - name: DEFAULT_VECTORIZER_MODULE
+          value: none
+        - name: CLUSTER_JOIN
+          value: weaviate-platformai-headless.weaviate-default.svc.cluster.local
+        - name: AUTHENTICATION_APIKEY_ENABLED
+          value: "true"
+        - name: AUTHENTICATION_APIKEY_ALLOWED_KEYS
+          valueFrom:
+            secretKeyRef:
+              key: authentication-apikey-allowed-keys
+              name: weaviate-platformai-basic-auth
+        - name: AUTHENTICATION_APIKEY_USERS
+          value: admin
+        - name: AUTHORIZATION_ADMINLIST_ENABLED
+          value: "true"
+        - name: AUTHORIZATION_ADMINLIST_USERS
+          value: admin
+        - name: LIMIT_RESOURCES
+          value: "true"
+        - name: GOMAXPROCS
+          value: "6"
+        image:  10.96.0.20/dev/weaviate:int-prod-2.1.4
+        imagePullPolicy: Always
+        livenessProbe:
+          failureThreshold: 30
+          httpGet:
+            path: /v1/.well-known/live
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 900
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 3
+        name: weaviate-platformai
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        - containerPort: 50051
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /v1/.well-known/ready
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 3
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 3
+        resources:
+          limits:
+            cpu: "5"
+            memory: 9Gi
+        securityContext:
+          privileged: false
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /weaviate-config
+          name: weaviate-config
+        - mountPath: /var/lib/weaviate
+          name: weaviate-default-data
+        - mountPath: /binlogs
+          name: weaviate-default-binlogs
+      imagePullSecrets:
+      - name: zia-regcred
+      initContainers:
+      - command:
+        - sysctl
+        - -w
+        - vm.max_map_count=524288
+        - vm.overcommit_memory=1
+        image: 10.96.0.20/dev/alpine:prod-latest
+        resources:
+          limits:
+            cpu: "1"
+            memory: 1Gi
+        imagePullPolicy: Always
+        name: configure-sysctl
+        securityContext:
+          privileged: true
+          runAsUser: 0
+      volumes:
+      - configMap:
+          name: weaviate-platformai-config
+        name: weaviate-config
+  volumeClaimTemplates:
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: weaviate-default-data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 84Gi
+      storageClassName: local-storage
+      volumeMode: Filesystem
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: weaviate-default-binlogs
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 84Gi
+      storageClassName: local-storage
+      volumeMode: Filesystem
+---
+apiVersion: v1
+data:
+  conf.yaml: |-
+    ---
+    authentication:
+      anonymous_access:
+        enabled: false
+      oidc:
+        enabled: false
+    authorization:
+      admin_list:
+        enabled: false
+
+    query_defaults:
+      limit: 100
+    debug: false
+kind: ConfigMap
+metadata:
+  name: weaviate-platformai-config
+---
+apiVersion: v1
+data:
+  password: FAKEKEYFAKEKEY
+  username: FAKEKEYFAKEKEY
+  authentication-apikey-allowed-keys: FAKEKEYFAKEKEY
+kind: Secret
+metadata:
+  name: weaviate-platformai-basic-auth
+type: kubernetes.io/basic-auth
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: weaviate-platformai
+spec:
+  ports:
+  - name: http
+    nodePort: 30024 
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  - name: grpc
+    nodePort: 30025
+    port: 50051
+    protocol: TCP
+    targetPort: 50051
+  selector:
+    app: weaviate-platformai
+  type: NodePort
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: weaviate-platformai-headless
+spec:
+  clusterIP: None
+  internalTrafficPolicy: Cluster
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: 7000
+  publishNotReadyAddresses: true
+  selector:
+    app: weaviate-platformai
+  type: ClusterIP
+---
+# sdpondemand
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app: weaviate-sdpondemand
+  name: weaviate-sdpondemand
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: weaviate-sdpondemand
+  template:
+    metadata:
+      labels:
+        app: weaviate-sdpondemand
+        services: sdpondemand
+    spec:  
+      containers:
+      - args:
+        - --host
+        - 0.0.0.0
+        - --port
+        - "8080"
+        - --scheme
+        - http
+        - --config-file
+        - /weaviate-config/conf.yaml
+        - --read-timeout=60s
+        - --write-timeout=60s
+        command:
+        - /bin/weaviate
+        env:
+        - name: HOST_IP
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: status.hostIP
+        - name: PRIMARY_SETUP
+          value: "true"
+        - name: BINLOG_PATH
+          value: /binlogs
+        - name: PERSISTENCE_DATA_PATH
+          value: /var/lib/weaviate
+        - name: CLUSTER_DATA_BIND_PORT
+          value: "7001"
+        - name: CLUSTER_GOSSIP_BIND_PORT
+          value: "7000"
+        - name: GOGC
+          value: "100"
+        - name: PROMETHEUS_MONITORING_ENABLED
+          value: "false"
+        - name: PROMETHEUS_MONITORING_GROUP
+          value: "false"
+        - name: QUERY_MAXIMUM_RESULTS
+          value: "1000"
+        - name: QUERY_DEFAULT_RESULTS
+          value: "100"
+        - name: REINDEX_VECTOR_DIMENSIONS_AT_STARTUP
+          value: "false"
+        - name: TRACK_VECTOR_DIMENSIONS
+          value: "false"
+        - name: AUTOSCHEMA_ENABLED
+          value: "false"
+        - name: GOMEMLIMIT
+          value: "24000MiB"
+        - name: CLUSTER_SKIP_SCHEMA_REPAIR
+          value: "false"
+        - name: CLUSTER_BASIC_AUTH_USERNAME
+          valueFrom:
+            secretKeyRef:
+              key: username
+              name: weaviate-sdpondemand-basic-auth
+        - name: CLUSTER_BASIC_AUTH_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: password
+              name: weaviate-sdpondemand-basic-auth
+        - name: STANDALONE_MODE
+          value: "true"
+        - name: DEFAULT_VECTORIZER_MODULE
+          value: none
+        - name: CLUSTER_JOIN
+          value: weaviate-sdpondemand-headless.weaviate-default.svc.cluster.local
+        - name: AUTHENTICATION_APIKEY_ENABLED
+          value: "true"
+        - name: AUTHENTICATION_APIKEY_ALLOWED_KEYS
+          valueFrom:
+            secretKeyRef:
+              key: authentication-apikey-allowed-keys
+              name: weaviate-sdpondemand-basic-auth
+        - name: AUTHENTICATION_APIKEY_USERS
+          value: admin
+        - name: AUTHORIZATION_ADMINLIST_ENABLED
+          value: "true"
+        - name: AUTHORIZATION_ADMINLIST_USERS
+          value: admin
+        - name: LIMIT_RESOURCES
+          value: "true"
+        - name: GOMAXPROCS
+          value: "6"
+        image: 10.96.0.20/dev/weaviate:int-prod-2.1.4
+        imagePullPolicy: Always
+        livenessProbe:
+          failureThreshold: 30
+          httpGet:
+            path: /v1/.well-known/live
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 900
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 3
+        name: weaviate-sdpondemand
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        - containerPort: 50051
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /v1/.well-known/ready
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 3
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 3
+        resources:
+          limits:
+            cpu: "5"
+            memory: 32Gi
+        securityContext:
+          privileged: false
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /weaviate-config
+          name: weaviate-config
+        - mountPath: /var/lib/weaviate
+          name: weaviate-default-data
+        - mountPath: /binlogs
+          name: weaviate-default-binlogs
+      imagePullSecrets:
+      - name: zia-regcred
+      initContainers:
+      - command:
+        - sysctl
+        - -w
+        - vm.max_map_count=524288
+        - vm.overcommit_memory=1
+        image: 10.96.0.20/dev/alpine:prod-latest
+        resources:
+          limits:
+            cpu: "1"
+            memory: 1Gi
+        imagePullPolicy: Always
+        name: configure-sysctl
+        securityContext:
+          privileged: true
+          runAsUser: 0
+      volumes:
+      - configMap:
+          name: weaviate-sdpondemand-config
+        name: weaviate-config
+  volumeClaimTemplates:
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: weaviate-default-data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 120Gi
+      storageClassName: local-storage
+      volumeMode: Filesystem
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: weaviate-default-binlogs
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 120Gi
+      storageClassName: local-storage
+      volumeMode: Filesystem
+---
+apiVersion: v1
+data:
+  conf.yaml: |-
+    ---
+    authentication:
+      anonymous_access:
+        enabled: false
+      oidc:
+        enabled: false
+    authorization:
+      admin_list:
+        enabled: false
+
+    query_defaults:
+      limit: 100
+    debug: false
+kind: ConfigMap
+metadata:
+  name: weaviate-sdpondemand-config
+---
+apiVersion: v1
+data:
+  password: FAKEKEYFAKEKEY
+  username: FAKEKEYFAKEKEY
+  authentication-apikey-allowed-keys: FAKEKEYFAKEKEY
+kind: Secret
+metadata:
+  name: weaviate-sdpondemand-basic-auth
+type: kubernetes.io/basic-auth
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: weaviate-sdpondemand
+spec:
+  ports:
+  - name: http
+    nodePort: 30026
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  - name: grpc
+    nodePort: 30027
+    port: 50051
+    protocol: TCP
+    targetPort: 50051
+  selector:
+    app: weaviate-sdpondemand
+  type: NodePort
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: weaviate-sdpondemand-headless
+spec:
+  clusterIP: None
+  internalTrafficPolicy: Cluster
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: 7000
+  publishNotReadyAddresses: true
+  selector:
+    app: weaviate-sdpondemand
+  type: ClusterIP
+---
+# deduplication
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app: weaviate
+  name: weaviate
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: weaviate
+  template:
+    metadata:
+      labels:
+        app: weaviate
+        services: deduplication
+    spec:  
+      containers:
+      - args:
+        - --host
+        - 0.0.0.0
+        - --port
+        - "8080"
+        - --scheme
+        - http
+        - --config-file
+        - /weaviate-config/conf.yaml
+        - --read-timeout=60s
+        - --write-timeout=60s
+        command:
+        - /bin/weaviate
+        env:
+        - name: HOST_IP
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: status.hostIP
+        - name: PRIMARY_SETUP
+          value: "true"
+        - name: BINLOG_PATH
+          value: /binlogs
+        - name: PERSISTENCE_DATA_PATH
+          value: /var/lib/weaviate
+        - name: CLUSTER_DATA_BIND_PORT
+          value: "7001"
+        - name: CLUSTER_GOSSIP_BIND_PORT
+          value: "7000"
+        - name: GOGC
+          value: "100"
+        - name: PROMETHEUS_MONITORING_ENABLED
+          value: "false"
+        - name: PROMETHEUS_MONITORING_GROUP
+          value: "false"
+        - name: QUERY_MAXIMUM_RESULTS
+          value: "1000"
+        - name: QUERY_DEFAULT_RESULTS
+          value: "100"
+        - name: REINDEX_VECTOR_DIMENSIONS_AT_STARTUP
+          value: "false"
+        - name: TRACK_VECTOR_DIMENSIONS
+          value: "false"
+        - name: AUTOSCHEMA_ENABLED
+          value: "false"
+        - name: GOMEMLIMIT
+          value: "24000MiB"
+        - name: CLUSTER_SKIP_SCHEMA_REPAIR
+          value: "false"
+        - name: LOG_LEVEL
+          value: debug
+        - name: CLUSTER_BASIC_AUTH_USERNAME
+          valueFrom:
+            secretKeyRef:
+              key: username
+              name: weaviate-basic-auth
+        - name: CLUSTER_BASIC_AUTH_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: password
+              name: weaviate-basic-auth
+        - name: STANDALONE_MODE
+          value: "true"
+        - name: DEFAULT_VECTORIZER_MODULE
+          value: none
+        - name: CLUSTER_JOIN
+          value: weaviate-headless.weaviate-default.svc.cluster.local
+        - name: AUTHENTICATION_APIKEY_ENABLED
+          value: "true"
+        - name: AUTHENTICATION_APIKEY_ALLOWED_KEYS
+          valueFrom:
+            secretKeyRef:
+              key: authentication-apikey-allowed-keys
+              name: weaviate-basic-auth
+        - name: AUTHENTICATION_APIKEY_USERS
+          value: admin
+        - name: AUTHORIZATION_ADMINLIST_ENABLED
+          value: "true"
+        - name: AUTHORIZATION_ADMINLIST_USERS
+          value: admin
+        - name: LIMIT_RESOURCES
+          value: "true"
+        - name: GOMAXPROCS
+          value: "6"
+        image: 10.96.0.20/dev/weaviate:int-prod-2.1.4
+        imagePullPolicy: Always
+        livenessProbe:
+          failureThreshold: 30
+          httpGet:
+            path: /v1/.well-known/live
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 900
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 3
+        name: weaviate
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        - containerPort: 50051
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /v1/.well-known/ready
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 3
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 3
+        resources:
+          limits:
+            cpu: "5"
+            memory: 32Gi
+        securityContext:
+          privileged: false
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /weaviate-config
+          name: weaviate-config
+        - mountPath: /var/lib/weaviate
+          name: weaviate-default-data
+        - mountPath: /binlogs
+          name: weaviate-default-binlogs
+      imagePullSecrets:
+      - name: zia-regcred
+      initContainers:
+      - command:
+        - sysctl
+        - -w
+        - vm.max_map_count=524288
+        - vm.overcommit_memory=1
+        image: 10.96.0.20/dev/alpine:prod-latest
+        resources:
+          limits:
+            cpu: "1"
+            memory: 1Gi
+        imagePullPolicy: Always
+        name: configure-sysctl
+        securityContext:
+          privileged: true
+          runAsUser: 0
+      volumes:
+      - configMap:
+          name: weaviate-config
+        name: weaviate-config
+  volumeClaimTemplates:
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: weaviate-default-data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 120Gi
+      storageClassName: local-storage
+      volumeMode: Filesystem
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: weaviate-default-binlogs
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 120Gi
+      storageClassName: local-storage
+      volumeMode: Filesystem
+---
+apiVersion: v1
+data:
+  conf.yaml: |-
+    ---
+    authentication:
+      anonymous_access:
+        enabled: false
+      oidc:
+        enabled: false
+    authorization:
+      admin_list:
+        enabled: false
+
+    query_defaults:
+      limit: 100
+    debug: false
+kind: ConfigMap
+metadata:
+  name: weaviate-config
+---
+apiVersion: v1
+data:
+  password: FAKEKEYFAKEKEY
+  username: FAKEKEYFAKEKEY
+  authentication-apikey-allowed-keys: FAKEKEYFAKEKEY
+kind: Secret
+metadata:
+  name: weaviate-basic-auth
+type: kubernetes.io/basic-auth
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: weaviate
+spec:
+  ports:
+  - name: http
+    nodePort: 30020
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  - name: grpc
+    nodePort: 30021
+    port: 50051
+    protocol: TCP
+    targetPort: 50051
+  selector:
+    app: weaviate
+  type: NodePort
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: weaviate-headless
+spec:
+  clusterIP: None
+  internalTrafficPolicy: Cluster
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: 7000
+  publishNotReadyAddresses: true
+  selector:
+    app: weaviate
+  type: ClusterIP
+---
+# ziaplatform
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app: weaviate-ziaplatform
+  name: weaviate-ziaplatform
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: weaviate-ziaplatform
+  template:
+    metadata:
+      labels:
+        app: weaviate-ziaplatform
+        services: ziaplatform-ziahub
+    spec:  
+      containers:
+      - args:
+        - --host
+        - 0.0.0.0
+        - --port
+        - "8080"
+        - --scheme
+        - http
+        - --config-file
+        - /weaviate-config/conf.yaml
+        - --read-timeout=60s
+        - --write-timeout=60s
+        command:
+        - /bin/weaviate
+        env:
+        - name: HOST_IP
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: status.hostIP
+        - name: PRIMARY_SETUP
+          value: "true"
+        - name: BINLOG_PATH
+          value: /binlogs
+        - name: PERSISTENCE_DATA_PATH
+          value: /var/lib/weaviate
+        - name: CLUSTER_DATA_BIND_PORT
+          value: "7001"
+        - name: CLUSTER_GOSSIP_BIND_PORT
+          value: "7000"
+        - name: GOGC
+          value: "100"
+        - name: PROMETHEUS_MONITORING_ENABLED
+          value: "true"
+        - name: PROMETHEUS_MONITORING_GROUP
+          value: "false"
+        - name: QUERY_MAXIMUM_RESULTS
+          value: "1000"
+        - name: QUERY_DEFAULT_RESULTS
+          value: "100"
+        - name: REINDEX_VECTOR_DIMENSIONS_AT_STARTUP
+          value: "false"
+        - name: TRACK_VECTOR_DIMENSIONS
+          value: "false"
+        - name: AUTOSCHEMA_ENABLED
+          value: "false"
+        - name: GOMEMLIMIT
+          value: "24000MiB"
+        - name: CLUSTER_SKIP_SCHEMA_REPAIR
+          value: "false"
+        - name: CLUSTER_BASIC_AUTH_USERNAME
+          valueFrom:
+            secretKeyRef:
+              key: username
+              name: weaviate-ziaplatform-basic-auth
+        - name: CLUSTER_BASIC_AUTH_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: password
+              name: weaviate-ziaplatform-basic-auth
+        - name: STANDALONE_MODE
+          value: "true"
+        - name: DEFAULT_VECTORIZER_MODULE
+          value: none
+        - name: CLUSTER_JOIN
+          value: weaviate-ziaplatform-headless.weaviate-default.svc.cluster.local
+        - name: AUTHENTICATION_APIKEY_ENABLED
+          value: "true"
+        - name: AUTHENTICATION_APIKEY_ALLOWED_KEYS
+          valueFrom:
+            secretKeyRef:
+              key: authentication-apikey-allowed-keys
+              name: weaviate-ziaplatform-basic-auth
+        - name: AUTHENTICATION_APIKEY_USERS
+          value: admin
+        - name: AUTHORIZATION_ADMINLIST_ENABLED
+          value: "true"
+        - name: AUTHORIZATION_ADMINLIST_USERS
+          value: admin
+        - name: LIMIT_RESOURCES
+          value: "true"
+        - name: GOMAXPROCS
+          value: "6"
+        - name: LOG_LEVEL
+          value: debug
+        image:  10.96.0.20/dev/weaviate:int-prod-2.1.4
+        imagePullPolicy: Always
+        livenessProbe:
+          failureThreshold: 30
+          httpGet:
+            path: /v1/.well-known/live
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 900
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 3
+        name: weaviate-ziaplatform
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        - containerPort: 50051
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /v1/.well-known/ready
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 3
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 3
+        resources:
+          limits:
+            cpu: "5"
+            memory: 24Gi
+        securityContext:
+          privileged: false
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /weaviate-config
+          name: weaviate-config
+        - mountPath: /var/lib/weaviate
+          name: weaviate-default-data
+        - mountPath: /binlogs
+          name: weaviate-default-binlogs
+      imagePullSecrets:
+      - name: zia-regcred
+      initContainers:
+      - command:
+        - sysctl
+        - -w
+        - vm.max_map_count=524288
+        - vm.overcommit_memory=1
+        image:  10.96.0.20/dev/alpine:prod-latest
+        resources:
+          limits:
+            cpu: "1"
+            memory: 1Gi
+        imagePullPolicy: Always
+        name: configure-sysctl
+        securityContext:
+          privileged: true
+          runAsUser: 0
+      volumes:
+      - configMap:
+          name: weaviate-ziaplatform-config
+        name: weaviate-config
+  volumeClaimTemplates:
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: weaviate-default-data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 84Gi
+      storageClassName: local-storage
+      volumeMode: Filesystem
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: weaviate-default-binlogs
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 84Gi
+      storageClassName: local-storage
+      volumeMode: Filesystem
+---
+apiVersion: v1
+data:
+  conf.yaml: |-
+    ---
+    authentication:
+      anonymous_access:
+        enabled: false
+      oidc:
+        enabled: false
+    authorization:
+      admin_list:
+        enabled: false
+
+    query_defaults:
+      limit: 100
+    debug: false
+kind: ConfigMap
+metadata:
+  name: weaviate-ziaplatform-config
+---
+apiVersion: v1
+data:
+  password: FAKEKEYFAKEKEY
+  username: FAKEKEYFAKEKEY
+  authentication-apikey-allowed-keys: FAKEKEYFAKEKEY
+kind: Secret
+metadata:
+  name: weaviate-ziaplatform-basic-auth
+type: kubernetes.io/basic-auth
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: weaviate-ziaplatform
+spec:
+  ports:
+  - name: http
+    nodePort: 30028
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  - name: grpc
+    nodePort: 30029
+    port: 50051
+    protocol: TCP
+    targetPort: 50051
+  selector:
+    app: weaviate-ziaplatform
+  type: NodePort
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: weaviate-ziaplatform-headless
+spec:
+  clusterIP: None
+  internalTrafficPolicy: Cluster
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: 7000
+  publishNotReadyAddresses: true
+  selector:
+    app: weaviate-ziaplatform
+  type: ClusterIP

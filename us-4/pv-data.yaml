@@ -1,0 +1,425 @@
+# zohocrm
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: weaviate-default-data-weaviate-zohocrm-0
+spec:
+  accessModes:
+  - ReadWriteOnce
+  capacity:
+    storage: 32Gi
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: weaviate-default-data-weaviate-zohocrm-0
+    namespace: weaviate-default
+  hostPath:
+    path: /disk1/home/sas/volumes/weaviate-default/data/zohocrm/weaviate-0
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - 10.42.153.7
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  volumeMode: Filesystem
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: weaviate-default-data-weaviate-zohocrm-1
+spec:
+  accessModes:
+  - ReadWriteOnce
+  capacity:
+    storage: 32Gi
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: weaviate-default-data-weaviate-zohocrm-1
+    namespace: weaviate-default
+  hostPath:
+    path: /home/sas/volumes/weaviate-default/data/zohocrm/weaviate-1
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - 10.42.153.8
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  volumeMode: Filesystem
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: weaviate-default-data-weaviate-zohocrm-2
+spec:
+  accessModes:
+  - ReadWriteOnce
+  capacity:
+    storage: 32Gi
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: weaviate-default-data-weaviate-zohocrm-2
+    namespace: weaviate-default
+  hostPath:
+    path: /home/sas/volumes/weaviate-default/data/zohocrm/weaviate-2
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - 10.42.153.9
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  volumeMode: Filesystem
+---
+# platformai
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: weaviate-default-data-weaviate-platformai-0
+spec:
+  accessModes:
+  - ReadWriteOnce
+  capacity:
+    storage: 84Gi
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: weaviate-default-data-weaviate-platformai-0
+    namespace: weaviate-default
+  hostPath:
+    path: /disk1/home/sas/volumes/weaviate-default/data/platformai/weaviate-0
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - 10.42.153.7
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  volumeMode: Filesystem
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: weaviate-default-data-weaviate-platformai-1
+spec:
+  accessModes:
+  - ReadWriteOnce
+  capacity:
+    storage: 84Gi
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: weaviate-default-data-weaviate-platformai-1
+    namespace: weaviate-default
+  hostPath:
+    path: /home/sas/volumes/weaviate-default/data/platformai/weaviate-1
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - 10.42.153.8
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  volumeMode: Filesystem
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: weaviate-default-data-weaviate-platformai-2
+spec:
+  accessModes:
+  - ReadWriteOnce
+  capacity:
+    storage: 84Gi
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: weaviate-default-data-weaviate-platformai-2
+    namespace: weaviate-default
+  hostPath:
+    path: /home/sas/volumes/weaviate-default/data/platformai/weaviate-2
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - 10.42.153.9
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  volumeMode: Filesystem
+---
+# sdpondemand
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: weaviate-default-data-weaviate-sdpondemand-0
+spec:
+  accessModes:
+  - ReadWriteOnce
+  capacity:
+    storage: 120Gi
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: weaviate-default-data-weaviate-sdpondemand-0
+    namespace: weaviate-default
+  hostPath:
+    path: /disk1/home/sas/volumes/weaviate-default/data/sdpondemand/weaviate-0
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - 10.42.153.7
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  volumeMode: Filesystem
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: weaviate-default-data-weaviate-sdpondemand-1
+spec:
+  accessModes:
+  - ReadWriteOnce
+  capacity:
+    storage: 120Gi
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: weaviate-default-data-weaviate-sdpondemand-1
+    namespace: weaviate-default
+  hostPath:
+    path: /home/sas/volumes/weaviate-default/data/sdpondemand/weaviate-1
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - 10.42.153.8
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  volumeMode: Filesystem
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: weaviate-default-data-weaviate-sdpondemand-2
+spec:
+  accessModes:
+  - ReadWriteOnce
+  capacity:
+    storage: 120Gi
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: weaviate-default-data-weaviate-sdpondemand-2
+    namespace: weaviate-default
+  hostPath:
+    path: /home/sas/volumes/weaviate-default/data/sdpondemand/weaviate-2
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - 10.42.153.9
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  volumeMode: Filesystem
+---
+# deduplication
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: weaviate-default-data-weaviate-0
+spec:
+  accessModes:
+  - ReadWriteOnce
+  capacity:
+    storage: 120Gi
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: weaviate-default-data-weaviate-0
+    namespace: weaviate-default
+  hostPath:
+    path: /disk1/home/sas/volumes/weaviate-default/data/deduplication/weaviate-0
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - 10.42.153.7
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  volumeMode: Filesystem
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: weaviate-default-data-weaviate-1
+spec:
+  accessModes:
+  - ReadWriteOnce
+  capacity:
+    storage: 120Gi
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: weaviate-default-data-weaviate-1
+    namespace: weaviate-default
+  hostPath:
+    path: /home/sas/volumes/weaviate-default/data/deduplication/weaviate-1
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - 10.42.153.8
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  volumeMode: Filesystem
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: weaviate-default-data-weaviate-2
+spec:
+  accessModes:
+  - ReadWriteOnce
+  capacity:
+    storage: 120Gi
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: weaviate-default-data-weaviate-2
+    namespace: weaviate-default
+  hostPath:
+    path: /home/sas/volumes/weaviate-default/data/deduplication/weaviate-2
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - 10.42.153.9
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  volumeMode: Filesystem
+---
+# ziaplatform
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: weaviate-default-data-weaviate-ziaplatform-0
+spec:
+  accessModes:
+  - ReadWriteOnce
+  capacity:
+    storage: 84Gi
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: weaviate-default-data-weaviate-ziaplatform-0
+    namespace: weaviate-default
+  hostPath:
+    path: /disk1/home/sas/volumes/weaviate-default/data/ziaplatform/weaviate-0
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - 10.42.153.7
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  volumeMode: Filesystem
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: weaviate-default-data-weaviate-ziaplatform-1
+spec:
+  accessModes:
+  - ReadWriteOnce
+  capacity:
+    storage: 84Gi
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: weaviate-default-data-weaviate-ziaplatform-1
+    namespace: weaviate-default
+  hostPath:
+    path: /home/sas/volumes/weaviate-default/data/ziaplatform/weaviate-1
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - 10.42.153.8
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  volumeMode: Filesystem
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: weaviate-default-data-weaviate-ziaplatform-2
+spec:
+  accessModes:
+  - ReadWriteOnce
+  capacity:
+    storage: 84Gi
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: weaviate-default-data-weaviate-ziaplatform-2
+    namespace: weaviate-default
+  hostPath:
+    path: /home/sas/volumes/weaviate-default/data/ziaplatform/weaviate-2
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - 10.42.153.9
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  volumeMode: Filesystem
+

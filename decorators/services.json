@@ -1,0 +1,49 @@
+{"services":{
+    "deduplication":{
+        "http_host":"172.20.93.198",
+        "http_port":30010,
+        "grpc_host":"172.20.93.198",
+        "grpc_port":30011,
+        "http_secure":false,
+        "grpc_secure":false,
+        "api_key":"admin-pass-key"
+    },
+    "zohocrm":{
+        "http_host":"172.20.93.198",
+        "http_port":30010,
+        "grpc_host":"172.20.93.198",
+        "grpc_port":30011,
+        "http_secure":false,
+        "grpc_secure":false,
+        "api_key":"admin-pass-key"
+    },
+    "idmpod":{
+        "http_host":"172.20.93.198",
+        "http_port":30010,
+        "grpc_host":"172.20.93.198",
+        "grpc_port":30011,
+        "http_secure":false,
+        "grpc_secure":false,
+        "api_key":"admin-pass-key"
+    },
+    "sdpondemand":{
+        "http_host":"172.20.93.198",
+        "http_port":30012,
+        "grpc_host":"172.20.93.198",
+        "grpc_port":30013,
+        "http_secure":false,
+        "grpc_secure":false,
+        "api_key":"admin-pass-key"
+    },
+    "ziaplatform":{
+        "http_host":"172.20.93.198",
+        "http_port":30012,
+        "grpc_host":"172.20.93.198",
+        "grpc_port":30013,
+        "http_secure":false,
+        "grpc_secure":false,
+        "api_key":"admin-pass-key"
+    }
+}
+}
+
