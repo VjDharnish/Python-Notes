@@ -3,42 +3,43 @@ from math import ceil
 from functools import wraps
 import json 
 import cherrypy
-# def do_twice(func):
-#     def wrapper(*args,**kwargs):
-#         func(*args,**kwargs)
-#         func(*args,**kwargs)
-#     return wrapper
+def do_twice(func):
+    def wrapper(*args,**kwargs):
+        func(*args,**kwargs)
+        func(*args,**kwargs)
+    return wrapper
 
-# def timeit(func):
-#     def wrapper(*args,**kwargs):
-#         start_time= time.time()
-#         result =func(*args,**kwargs)
-#         end_time = time.time()
-#         total = (end_time-start_time)*1000
-#         print(f"Function : {func.__name__} Execution Time: {ceil(total)} seconds")
-#         return result 
-#     return wrapper
+def timeit(func):
+    @wraps(func)
+    def wrapper(*args,**kwargs):
+        start = time.perf_counter()
+        try:
+            result = func(*args, **kwargs)
+        except Exception as e:
+            print(f"Function : {func.__name__} raised an exception: {e}")
+            raise
+        end_time = time.perf_counter()
+        total = (end_time - start) * 1000
+        print(f"Function : {func.__name__} Execution Time: {total} milliseconds")
+        return result
+    return wrapper
 
-# class A:
-#     def process_data(self):
-#         print("Processing A with", self)
+def get_instance(func):
+    def wrapper(instance,*args,**kwargs):
+        if instance.clo is None:
+            print("Not INitailixecd")
+            instance.clo= A()
+        return func(instance,*args,**kwargs)
+    return wrapper
 
-# def get_instance(func):
-#     def wrapper(instance,*args,**kwargs):
-#         if instance.clo is None:
-#             print("Not INitailixecd")
-#             instance.clo= A()
-#         return func(instance,*args,**kwargs)
-#     return wrapper
+class MyClass:
+    def __init__(self):
+        self.clo = None
+        print("MyClass instance initialized")
 
-# class MyClass:
-#     def __init__(self):
-#         self.clo = None
-#         print("MyClass instance initialized")
-
-#     @get_instance
-#     def process_data(self):
-#         print("Processing data with", self)
+    @get_instance
+    def process_data(self):
+        print("Processing data with", self)
 
 
 # obj  =MyClass()
